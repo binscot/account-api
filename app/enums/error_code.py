@@ -12,7 +12,7 @@ class ErrorCode(StrEnum):
     BS108 = "BS108"
     BS109 = "BS109"
 
-    def get_message(self):
+    def message(self):
         if self == "BS101":
             return "중복된 데이터를 사용할 수 없습니다."
         elif self == "BS102":

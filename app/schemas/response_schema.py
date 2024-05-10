@@ -18,17 +18,23 @@ class ErrorResponse(BaseModel):
     message: Optional[str]
     request: Any
 
-    def error_response_setting(self: Request, exc):
+    def setting(self: Request, exc):
         code = exc.__dict__.get('code')
         info = exc.__dict__.get('info')
 
         return ErrorResponse(
             error_code=code,
             success=False,
-            message=ErrorCode.get_message(code),
+            message=ErrorCode.message(code),
             request={
                 "client": self.client,
                 "url": str(self.url),
                 "body": info
             }
         ).__dict__
+
+
+class TokenResponse(BaseModel):
+    access_token: Optional[str]
+    username: Optional[str]
+    id: Optional[str]
