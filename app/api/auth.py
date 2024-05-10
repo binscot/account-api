@@ -52,7 +52,6 @@ async def signin(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], res
     response.set_cookie(key=TokenType.REFRESH_TOKEN, value=refresh_token, httponly=True)
     response = CommonResponse(
         success=True, message="Item found", data={
-            "status_code": 200,
             "access_token": access_token,
             "username": user.username
         }, request={"name": form_data.username}
