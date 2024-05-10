@@ -85,30 +85,21 @@ async def logout(response: Response):
     response = CommonResponse(
         success=True, message="로그아웃 되었습니다.", data={
             "status_code": 200,
-
         }, request=None
     )
     return response
 
 
-@router.post("/test", response_model=CommonResponse | ErrorResponse)
-async def test(key: str, value: str):
-    try:
-        redis.client.set(key, value)
-    except Exception as e:
-        raise JwtError(info=e, code=ErrorCode.BS105)
-    try:
-        value = redis.client.get(key)
-    except Exception as e:
-        raise JwtError(info=e, code=ErrorCode.BS105)
-    response = CommonResponse(
-        success=True, message="로그아웃 되었습니다.", data={
+@router.post("/redis_test", response_model=CommonResponse | ErrorResponse)
+async def redis_test(key: str, value: str):
+    redis.client.set(key, value)
+    value = redis.client.get(key)
+    return CommonResponse(
+        success=True, message="redis test", data={
             "status_code": 200,
             "value": value
-
         }, request=None
     )
-    return response
 
 
 def create_jwt_token(data: dict, token_type: TokenType):
