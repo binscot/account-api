@@ -49,6 +49,7 @@ async def signin(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], res
     refresh_token = create_jwt_token(data={"sub": str(user.id)}, token_type=TokenType.REFRESH_TOKEN)
     access_token = create_jwt_token(data={"sub": str(user.id)}, token_type=TokenType.ACCESS_TOKEN)
 
+
     response.set_cookie(key=TokenType.REFRESH_TOKEN, value=refresh_token, httponly=True)
     response = CommonResponse(
         success=True, message="Item found", data={
