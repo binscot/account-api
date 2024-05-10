@@ -101,6 +101,16 @@ async def redis_test(key: str, value: str):
     )
 
 
+@router.get("/test_jenkins", response_model=CommonResponse | ErrorResponse)
+async def test():
+    return CommonResponse(
+        success=True, message="redis test", data={
+            "status_code": 200,
+            "value": "jenkins server test"
+        }, request=None
+    )
+
+
 def create_jwt_token(data: dict, token_type: TokenType):
     expire = datetime.utcnow() + timedelta(minutes=TokenType.get_expire_minutes(token_type))
     try:
