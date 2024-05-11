@@ -10,7 +10,7 @@ password_context = CryptContext(schemes=[CRYPT_CONTEXT], deprecated="auto")
 
 def check_password(sign_password: str, hashed_password: str) -> bool:
     try:
-        return password_context.verify(sign_password, hashed_password)
+        is_accurate = password_context.verify(sign_password, hashed_password)
     except Exception as e:
         raise ValidationError(info=e, code=ErrorCode.BS105)
-
+    return is_accurate

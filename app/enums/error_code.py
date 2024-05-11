@@ -2,6 +2,7 @@ from enum import StrEnum
 
 
 class ErrorCode(StrEnum):
+    BS112 = "BS112"
     BS101 = "BS101"
     BS102 = "BS102"
     BS103 = "BS103"
@@ -41,3 +42,5 @@ class ErrorCode(StrEnum):
             return "비밀번호가 일치하지 않습니다."
         elif self == "BS111":
             return "빈 값은 허용되지 않습니다."
+        elif self == "BS112":
+            return "Field required"

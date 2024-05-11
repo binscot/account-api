@@ -4,8 +4,9 @@ from app.enums.error_code import ErrorCode
 
 
 class CredentialsException(Exception):
-    def __init__(self, info: str):
+    def __init__(self, info: Any, code=ErrorCode):
         self.info = info
+        self.code = code
 
 
 class ValidationError(Exception):
@@ -21,12 +22,16 @@ class NotUniqueError(Exception):
 
 
 class DataBaseError(Exception):
-    def __init__(self, info: Any,  code=ErrorCode):
+    def __init__(self, info: Any, code=ErrorCode):
         self.info = info
         self.code = code
 
 
 class JwtError(Exception):
-    def __init__(self, info: Any,  code=ErrorCode):
+    def __init__(self, info: Any, code=ErrorCode):
         self.info = info
         self.code = code
+
+
+class RequestValidationError:
+    pass

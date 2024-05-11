@@ -1,5 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
+from app.enums.error_code import ErrorCode
 from app.schemas.response_schema import ErrorResponse
 from app.exception import exception_handlers_initializer
 
@@ -21,4 +23,10 @@ async def database_exception_handler(request: Request, exc: exception_handlers_i
 
 
 async def jwt_exception_handler(request: Request, exc: exception_handlers_initializer.JwtError):
+    return JSONResponse(content=ErrorResponse.setting(request, exc), status_code=500)
+
+
+async def request_exception_handler(request: Request, exc: exception_handlers_initializer.RequestValidationError):
+    exc.info = exc.__str__()
+    exc.code = ErrorCode.BS112.message()
     return JSONResponse(content=ErrorResponse.setting(request, exc), status_code=500)

@@ -36,7 +36,6 @@ async def signin(form_data: Annotated[security.OAuth2PasswordRequestForm, Depend
     access_token = token_util.create_jwt_token(user.id, token_type=TokenType.ACCESS_TOKEN)
     token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
 
-    # response.set_cookie(key=TokenType.REFRESH_TOKEN, value=refresh_token, httponly=True)
     await token_util.set_token_in_cookie(refresh_token, TokenType.REFRESH_TOKEN, response)
     response = CommonResponse(success=True, message=None, data=token_response, request=form_data.username)
 

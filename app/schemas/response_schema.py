@@ -18,18 +18,16 @@ class ErrorResponse(BaseModel):
     message: Optional[str]
     request: Any
 
-    def setting(self: Request, exc):
-        code = exc.__dict__.get('code')
-        info = exc.__dict__.get('info')
-
+    @staticmethod
+    def setting(request: Request, exc):
         return ErrorResponse(
-            error_code=code,
+            error_code=exc.code,
             success=False,
-            message=ErrorCode.message(code),
+            message=ErrorCode.message(exc.code),
             request={
-                "client": self.client,
-                "url": str(self.url),
-                "body": info
+                "client": request.client,
+                "url": str(request.url),
+                "body": exc.info
             }
         ).__dict__
 
