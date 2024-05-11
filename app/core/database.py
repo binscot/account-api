@@ -3,7 +3,7 @@ from beanie import init_beanie
 from redis.client import Redis
 
 from app.core.config import settings
-from app.models.model import User, UserShort
+from app.schemas.user_schema import User, UserShort
 
 REDIS_SERVER = settings.REDIS_SERVER
 REDIS_PORT = settings.REDIS_PORT

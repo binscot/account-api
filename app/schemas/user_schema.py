@@ -1,30 +1,36 @@
+from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
+from beanie import Document
+from pydantic import BaseModel, field_validator
+from pydantic import EmailStr
 from pydantic_core.core_schema import FieldValidationInfo
-from beanie import PydanticObjectId
-from datetime import datetime
+
 from app.exception.exception_handlers_initializer import ValidationError
 
 
-class UserBase(BaseModel):
-    id: PydanticObjectId
-    admin: bool
+class User(Document):
+    admin: bool = False
     username: EmailStr
     join_type: str
     service_type: str
-    phone_number: Optional[str]
-    gender: Optional[str]
-    birthday: Optional[str]
-    disabled: bool
-    create_date: datetime
-
-
-class UserInDB(UserBase):
+    gender: Optional[str] = None
+    birthday: Optional[str] = None
+    phone_number: Optional[str] = None
     hashed_password: str
+    disabled: bool = False
+    created_at: datetime = datetime.utcnow()
 
-    class Config:
-        from_attributes = True
+    class Settings:
+        name = "User"
+
+
+class UserShort(Document):
+    username: EmailStr
+    created_at: datetime
+
+    class Settings:
+        name = "User"
 
 
 class UserCreate(BaseModel):
@@ -45,7 +51,3 @@ class UserCreate(BaseModel):
         if 'password1' in info.data and v != info.data['password1']:
             raise ValidationError(v, 'passwords do not match')
         return v
-
-
-class UserInfoRes(UserBase):
-    pass
