@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
 from app.api import auth
-from app.core import database
 from app.core import config
+from app.core import database
 from app.exception.exception_handlers_setup import setup_exception_handlers
 
 app = FastAPI()
