@@ -6,20 +6,29 @@ from app.core.database import redis
 from app.enums.error_code import ErrorCode
 from app.enums.token_type import TokenType
 from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
-from app.schemas.user_schema import UserCreate
+from app.schemas.user_schema import UserCreate, User
 from app.service.user_service import UserService
 from app.utils import token_util
 
 router = APIRouter()
 
 
+# commons: dict = Depends(common_parameters)
+# @router.post("/signup", response_model=CommonResponse | ErrorResponse)
+# async def signup(req: UserCreate):
+#     new_user = await UserService.create_user(req)
+#     if new_user is None:
+#         return CommonResponse(success=False, message=ErrorCode.BS101.message(), data=req.username, request=req.username)
+#     return CommonResponse(success=True, message=None, data=new_user, request=new_user)
+
 @router.post("/signup", response_model=CommonResponse | ErrorResponse)
-async def signup(req: UserCreate):
-    user = await UserService.get_user_short(username=req.username)
-    if user:
-        return CommonResponse(success=False, message=ErrorCode.BS101.message(), data=user.username, request=req.username)
-    new_user = await UserService.create_user(req)
-    return CommonResponse(success=True, message=None, data=new_user, request=new_user)
+async def signup(new_user: User = Depends(UserService.create_user)):
+    return CommonResponse(
+        success=True,
+        message=None,
+        data=new_user,
+        request=new_user
+    )
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)

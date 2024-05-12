@@ -4,7 +4,7 @@ from pydantic import EmailStr
 
 from app.core import config
 from app.enums.error_code import ErrorCode
-from app.exception.exception_handlers_initializer import DataBaseError, ValidationError
+from app.exception.exception_handlers_initializer import DataBaseError, ValidationError, NotUniqueError
 from app.schemas.user_schema import User, UserShort, UserCreate
 
 CRYPT_CONTEXT = config.settings.CRYPT_CONTEXT
@@ -14,6 +14,9 @@ password_context = CryptContext(schemes=[CRYPT_CONTEXT], deprecated="auto")
 class UserService:
     @classmethod
     async def create_user(cls, req: UserCreate) -> UserShort | None:
+        user = await cls.get_user_short(username=req.username)
+        if user:
+            raise NotUniqueError(info=ErrorCode.BS101.message(), code=ErrorCode.BS101)
         try:
             new_user = await User(
                 username=req.username,

@@ -20,7 +20,6 @@ class ErrorCode(StrEnum):
 
     def message(self):
         if self == "BS101":
-
             return "중복된 데이터를 사용할 수 없습니다."
         elif self == "BS102":
             return "db 저장 에러"
