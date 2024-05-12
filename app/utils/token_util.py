@@ -5,11 +5,11 @@ from fastapi import Response
 from jose import jwt
 
 from app.core import config
-from app.crud import user_crud
 from app.enums.error_code import ErrorCode
 from app.enums.token_type import TokenType
 from app.exception.exception_handlers_initializer import JwtError
 from app.schemas.user_schema import UserShort
+from app.service.user_service import UserService
 
 HASH_ALGORITHM = config.settings.HASH_ALGORITHM
 
@@ -42,7 +42,7 @@ async def verify_token(token: str, token_type: TokenType) -> UserShort:
         user_id = payload.get("sub")
     except Exception as e:
         raise JwtError(info={"e": e.__str__(), "token": token}, code=ErrorCode.BS108)
-    return await user_crud.get_user_short_by_id(user_id)
+    return await UserService.get_user_short_by_id(user_id)
 
 
 async def set_token_in_cookie(token: str, token_type: TokenType, response: Response):

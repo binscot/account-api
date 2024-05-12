@@ -3,33 +3,32 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response, security
 
 from app.core.database import redis
-from app.crud import user_crud
 from app.enums.error_code import ErrorCode
 from app.enums.token_type import TokenType
 from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
 from app.schemas.user_schema import UserCreate
-from app.utils import common_util, token_util
+from app.service.user_service import UserService
+from app.utils import token_util
 
 router = APIRouter()
 
 
 @router.post("/signup", response_model=CommonResponse | ErrorResponse)
 async def signup(req: UserCreate):
-    user = await user_crud.get_user_short(req.username)
+    user = await UserService.get_user_short(username=req.username)
     if user:
         return CommonResponse(success=False, message=ErrorCode.BS101.message(), data=user.username, request=req.username)
-    new_user = await user_crud.create_user(req)
+    new_user = await UserService.create_user(req)
     return CommonResponse(success=True, message=None, data=new_user, request=new_user)
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
 async def signin(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()], response: Response):
-
-    user = await user_crud.get_user(form_data.username)
+    user = await UserService.get_user(form_data.username)
 
     if not user:
         return CommonResponse(success=False, message=ErrorCode.BS103.message(), data=user, request=form_data.username)
-    if not common_util.check_password(form_data.password, user.hashed_password):
+    if not UserService.verify_password(form_data.password, user.hashed_password):
         return CommonResponse(success=False, message=ErrorCode.BS104.message(), data=None, request=form_data.username)
 
     refresh_token = token_util.create_jwt_token(user.id, token_type=TokenType.REFRESH_TOKEN)
@@ -73,6 +72,3 @@ async def redis_test(key: str, value: str):
             "value": value
         }, request=None
     )
-
-
-
