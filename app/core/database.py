@@ -1,5 +1,6 @@
-import motor.motor_asyncio
 from beanie import init_beanie
+from motor import motor_asyncio
+
 from redis.client import Redis
 
 from app.core.config import settings
@@ -17,33 +18,37 @@ MONGO_ID = settings.MONGO_ID
 MONGO_DB_NAME = settings.MONGO_DB_NAME
 
 
-class MongoDB:
-    def __init__(self):
-        self.client = None
-        self.database = None
+class MongoDBClient:
+    instance = None
+
+    def __new__(cls):
+        if not hasattr(cls, "instance") or cls.instance is None:
+            cls.instance = super(MongoDBClient, cls).__new__(cls)
+            cls.instance.mongo_client = motor_asyncio.AsyncIOMotorClient(
+                f"mongodb://{MONGO_ID}:{MONGO_PASSWORD}@{MONGO_SERVER}:{MONGO_PORT}"
+            )
+            cls.instance.db = cls.instance.mongo_client[MONGO_DB_NAME]
+        return cls.instance
 
     async def connect(self):
         try:
-
-            self.client = motor.motor_asyncio.AsyncIOMotorClient(
-                f"mongodb://{MONGO_ID}:{MONGO_PASSWORD}@{MONGO_SERVER}:{MONGO_PORT}"
-            )
-            self.database = self.client[MONGO_DB_NAME]
-
-            await init_beanie(database=self.database, document_models=[User, UserShort])
+            await init_beanie(database=self.db, document_models=[User, UserShort])
             print("DB 와 연결되었습니다.")
         except Exception as e:
             print(f"MongoDB 연결 에러: {e}")
 
-    def close(self):
-        self.client.close()
+    async def disconnect(self):
+        self.mongo_client.close()
         print("DB 연결 종료되었습니다.")
 
+    async def get_collection(self, collection_name):
+        return self.db[collection_name]
 
-mongodb = MongoDB()
+
+mongo_client = MongoDBClient()
 
 
-class RedisDB:
+class RedisClient:
     def __init__(self):
         self.client = None
 
@@ -59,4 +64,4 @@ class RedisDB:
         print("redis 연결 종료되었습니다.")
 
 
-redis = RedisDB()
+redis_client = RedisClient()
