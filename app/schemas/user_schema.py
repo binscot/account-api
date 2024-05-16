@@ -52,3 +52,23 @@ class UserCreate(BaseModel):
         if 'password1' in info.data and v != info.data['password1']:
             raise ValidationError(v, ErrorCode.BS110)
         return v
+
+
+class UserUpdate(BaseModel):
+    username: EmailStr
+    gender: Optional[str] = None
+    birthday: Optional[str] = None
+    phone_number: Optional[str] = None
+    original_password: Optional[str]
+
+    # @field_validator("*")
+    # def not_empty(cls, v):
+    #     if not v or not v.strip():
+    #         raise ValidationError(v, ErrorCode.BS111)
+    #     return v
+    #
+    # @field_validator('password2')
+    # def passwords_match(cls, v, info: FieldValidationInfo):
+    #     if 'password1' in info.data and v != info.data['password1']:
+    #         raise ValidationError(v, ErrorCode.BS110)
+    #     return v

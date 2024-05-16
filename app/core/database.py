@@ -1,8 +1,7 @@
 from beanie import init_beanie
 from motor import motor_asyncio
 
-from redis.client import Redis
-
+from redis import asyncio as aioredis
 from app.core.config import settings
 from app.schemas.user_schema import User, UserShort
 
@@ -48,20 +47,6 @@ class MongoDBClient:
 mongo_client = MongoDBClient()
 
 
-class RedisClient:
-    def __init__(self):
-        self.client = None
+async def get_redis_pool():
+    return await aioredis.from_url(f"redis://{REDIS_PASSWORD}@{REDIS_SERVER}:{REDIS_PORT}/{REDIS_DB}")
 
-    async def connect(self):
-        try:
-            self.client = Redis(host=REDIS_SERVER, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD)
-            print("redis 와 연결되었습니다.")
-        except Exception as e:
-            print(f"redis 연결 에러: {e}")
-
-    def close(self):
-        self.client.close()
-        print("redis 연결 종료되었습니다.")
-
-
-redis_client = RedisClient()

@@ -12,10 +12,8 @@ async def lifespan(app: FastAPI):
     try:
         print("application start")
         await database.mongo_client.connect()
-        await database.redis_client.connect()
         yield
         await database.mongo_client.disconnect()
-        database.redis_client.close()
         print("application end")
 
     except Exception as e:

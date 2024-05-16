@@ -1,83 +1,142 @@
+import json
+import uuid
+from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response, security
+from fastapi import APIRouter, Depends, Response
+from redis import asyncio as aioredis
 
-from app.core.database import redis
+from app import repository
+from app.core.database import get_redis_pool
+from app.security.jwt.jwt_authentication import GetCurrentUser
+from app.security.jwt import jwt_service
 from app.enums.error_code import ErrorCode
-from app.enums.token_type import TokenType
+from app.exception.exception_handlers_initializer import NotUniqueError
+from app.repository.user_repository import GetValidateUser
 from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
-from app.schemas.user_schema import UserCreate, User
-from app.service.user_service import UserService
-from app.utils import token_util
+from app.schemas.user_schema import UserCreate, User, UserUpdate
 
 router = APIRouter()
 
 
-# commons: dict = Depends(common_parameters)
-# @router.post("/signup", response_model=CommonResponse | ErrorResponse)
-# async def signup(req: UserCreate):
-#     new_user = await UserService.create_user(req)
-#     if new_user is None:
-#         return CommonResponse(success=False, message=ErrorCode.BS101.message(), data=req.username, request=req.username)
-#     return CommonResponse(success=True, message=None, data=new_user, request=new_user)
-
 @router.post("/signup", response_model=CommonResponse | ErrorResponse)
-async def signup(new_user: User = Depends(UserService.create_user)):
+async def signup(req: UserCreate):
+    user = await repository.user.get_by_email(username=req.username)
+    if user:
+        raise NotUniqueError(info=ErrorCode.BS101.message(), code=ErrorCode.BS101)
+    new_user = await repository.user.create(obj_in=req)
+    db_user = await repository.user_short.get_by_email_short(username=new_user.username)
     return CommonResponse(
         success=True,
         message=None,
-        data=new_user,
-        request=new_user
+        data=db_user,
+        request=db_user
     )
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
-async def signin(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()], response: Response):
-    user = await UserService.get_user(form_data.username)
+async def signin(user: Annotated[User, Depends(GetValidateUser)], response: Response):
+    data = {"id": str(user.id)}
+    access_token = jwt_service.create_access_token(data)
+    refresh_token = jwt_service.create_refresh_token(data)
 
-    if not user:
-        return CommonResponse(success=False, message=ErrorCode.BS103.message(), data=user, request=form_data.username)
-    if not UserService.verify_password(form_data.password, user.hashed_password):
-        return CommonResponse(success=False, message=ErrorCode.BS104.message(), data=None, request=form_data.username)
-
-    refresh_token = token_util.create_jwt_token(user.id, token_type=TokenType.REFRESH_TOKEN)
-    access_token = token_util.create_jwt_token(user.id, token_type=TokenType.ACCESS_TOKEN)
     token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
 
-    await token_util.set_token_in_cookie(refresh_token, TokenType.REFRESH_TOKEN, response)
-    response = CommonResponse(success=True, message=None, data=token_response, request=form_data.username)
-
+    response = CommonResponse(success=True, message=None, data=token_response, request=user.username)
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        # domain=".domain.com"
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        # domain=".domain.com"
+    )
     return response
 
 
+@router.put("/update", response_model=CommonResponse | ErrorResponse)
+async def update_user(req: UserUpdate):
+    """
+    Update user.
+    TODO Depends(deps.get_current_active_user), 만들기
+    user_in 으로 변경
+    """
+    current_user = await repository.user.get_by_email(username=req.username)
+    if current_user.hashed_password:
+        db_user = await repository.user.authenticate(username=current_user.username, password=req.original_password)
+        if not req.original_password or not db_user:
+            raise NotUniqueError(info=ErrorCode.BS101.message(), code=ErrorCode.BS101)
+
+    if req.gender is None:
+        req.gender = current_user.gender
+    if req.birthday is None:
+        req.birthday = current_user.birthday
+    if req.phone_number is None:
+        req.phone_number = current_user.phone_number
+    print("~~~~~~####~~~~~~~~~~")
+    print(req)
+    print("~~~~~~####~~~~~~~~~~")
+    user = await repository.user.update(db_obj=current_user, obj_in=req)
+
+    # user_in = schemas.UserUpdate(**current_user_data)
+    # if obj_in.password is not None:
+    #     user_in.password = obj_in.password
+    # if obj_in.full_name is not None:
+    #     user_in.full_name = obj_in.full_name
+    # if obj_in.email is not None:
+    #     check_user = await crud.user.get_by_email(db, email=obj_in.email)
+    #     if check_user and check_user.email != current_user.email:
+    #         raise HTTPException(
+    #             status_code=400,
+    #             detail="This username is not available.",
+    #         )
+    #     user_in.email = obj_in.email
+    # user = await crud.user.update(db, db_obj=current_user, obj_in=user_in)
+
+    return CommonResponse(success=True, message=user.username, data=None, request=None)
+
+
 @router.post("/token", response_model=CommonResponse | ErrorResponse)
-async def create_access_token(request: Request):
-    refresh_token = request.cookies.get(TokenType.REFRESH_TOKEN)
-    if not refresh_token:
-        return CommonResponse(success=False, message=ErrorCode.BS106.message(), data=None, request=None)
-
-    user = await token_util.verify_token(refresh_token, TokenType.REFRESH_TOKEN)
-    access_token = token_util.create_jwt_token(user.id, token_type=TokenType.ACCESS_TOKEN)
+async def token_check(user: Annotated[User, Depends(GetCurrentUser)]):
+    data = {"id": str(user.id)}
+    access_token = jwt_service.create_access_token(data)
     token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
-
     return CommonResponse(success=True, message=None, data=token_response, request=None)
 
 
 @router.post("/logout", response_model=CommonResponse | ErrorResponse)
 def logout(response: Response):
-    is_sign_out = token_util.delete_jwt_token(response, TokenType.REFRESH_TOKEN)
-    if not is_sign_out:
-        return CommonResponse(success=False, message=None, data=None, request=None)
+    response.delete_cookie("refresh_token")
     return CommonResponse(success=True, message=None, data=None, request=None)
 
 
 @router.post("/redis_test", response_model=CommonResponse | ErrorResponse)
-async def redis_test(key: str, value: str):
-    redis.client.set(key, value)
-    value = redis.client.get(key)
+async def redis_test(key: str, value: str, redis: Annotated[aioredis.Redis, Depends(get_redis_pool)]):
+    """
+    Session 생성
+    - 방장이 방을 생성한다.
+    """
+    session_id = str(f"{key}{uuid.uuid4()}")
+
+    session_data = {
+        "menu": [value],
+        "expires_at": (datetime.now() + timedelta(minutes=10)).isoformat()
+    }
+
+    await redis.set(session_id, json.dumps(session_data), ex=600)
+    result = await redis.get(session_id)
+    result = json.loads(result)
     return CommonResponse(
         success=True, message="redis test", data={
-            "status_code": 200,
-            "value": value
+            "key": session_id,
+            "value": result
         }, request=None
     )
