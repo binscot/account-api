@@ -37,5 +37,4 @@ class JWTAuthentication:
                 return user
 
 
-get_current_user = JWTAuthentication()
-GetCurrentUser = Annotated[User, Depends(get_current_user)]
+GetCurrentUser = JWTAuthentication()

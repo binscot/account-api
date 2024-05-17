@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from beanie import Document
+from beanie import Document, Indexed
 from pydantic import BaseModel, field_validator
 from pydantic import EmailStr
 from pydantic_core.core_schema import FieldValidationInfo
@@ -12,7 +12,7 @@ from app.exception.exception_handlers_initializer import ValidationError
 
 class User(Document):
     admin: bool = False
-    username: EmailStr
+    username: Indexed(EmailStr, unique=True)
     join_type: str
     service_type: str
     gender: Optional[str] = None
@@ -55,20 +55,21 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: EmailStr
     gender: Optional[str] = None
     birthday: Optional[str] = None
     phone_number: Optional[str] = None
-    original_password: Optional[str]
+    original_password: Optional[str] = None
+    new_password: Optional[str] = None
+    new_password_check: Optional[str] = None
 
-    # @field_validator("*")
-    # def not_empty(cls, v):
-    #     if not v or not v.strip():
-    #         raise ValidationError(v, ErrorCode.BS111)
-    #     return v
-    #
-    # @field_validator('password2')
-    # def passwords_match(cls, v, info: FieldValidationInfo):
-    #     if 'password1' in info.data and v != info.data['password1']:
-    #         raise ValidationError(v, ErrorCode.BS110)
-    #     return v
+    @field_validator("*")
+    def not_empty(cls, v):
+        if not v or not v.strip():
+            raise ValidationError(v, ErrorCode.BS111)
+        return v
+
+    @field_validator('new_password_check')
+    def passwords_match(cls, v, info: FieldValidationInfo):
+        if 'new_password' in info.data and v != info.data['new_password']:
+            raise ValidationError(v, ErrorCode.BS110)
+        return v

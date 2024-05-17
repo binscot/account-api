@@ -7,9 +7,9 @@ from app.enums.error_code import ErrorCode
 
 class CommonResponse(BaseModel):
     success: bool
-    message: Optional[str]
-    data: Any
-    request: Any
+    message: Optional[str] = None
+    data: Any = None
+    request: Any = None
 
 
 class ErrorResponse(BaseModel):

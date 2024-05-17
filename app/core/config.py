@@ -11,7 +11,7 @@ load_dotenv()
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/account"
 
-    CRYPT_CONTEXT: str = os.getenv('CRYPT_CONTEXT')
+    CRYPT_CONTEXT: list[str] = os.getenv('CRYPT_CONTEXT')
 
     JWT_SECRET_KEY: str = os.getenv('JWT_SECRET_KEY')
     JWT_REFRESH_SECRET_KEY: str = os.getenv('JWT_REFRESH_SECRET_KEY')

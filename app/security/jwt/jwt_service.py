@@ -20,7 +20,7 @@ class JWTService:
             self,
             encoder: JWTEncoder,
             decoder: JWTDecoder,
-            algorithm: str = None,
+            algorithm: str = HASH_ALGORITHM,
             secret_key: str = JWT_SECRET_KEY,
             access_token_expire_time: int = ACCESS_TOKEN_EXPIRE_MINUTES,
             refresh_token_expire_time: int = REFRESH_TOKEN_EXPIRE_MINUTES,
@@ -43,7 +43,6 @@ class JWTService:
 
     def check_token_expired(self, token: str) -> dict | None:
         payload = self.decoder.decode(token, self.secret_key, self.algorithm)
-
         now = datetime.timestamp(datetime.now(ZoneInfo("Asia/Seoul")))
         if payload and payload["exp"] < now:
             return None
