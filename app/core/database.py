@@ -1,14 +1,8 @@
 from beanie import init_beanie
 from motor import motor_asyncio
 
-from redis import asyncio as aioredis
 from app.core.config import settings
 from app.schemas.user_schema import User, UserShort
-
-REDIS_SERVER = settings.REDIS_SERVER
-REDIS_PORT = settings.REDIS_PORT
-REDIS_DB = settings.REDIS_DB
-REDIS_PASSWORD = settings.REDIS_PASSWORD
 
 MONGO_SERVER = settings.MONGO_SERVER
 MONGO_PORT = settings.MONGO_PORT
@@ -45,8 +39,3 @@ class MongoDBClient:
 
 
 mongo_client = MongoDBClient()
-
-
-async def get_redis_pool():
-    return await aioredis.from_url(f"redis://{REDIS_PASSWORD}@{REDIS_SERVER}:{REDIS_PORT}/{REDIS_DB}")
-

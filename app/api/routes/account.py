@@ -7,14 +7,13 @@ from fastapi import APIRouter, Depends, Response
 from redis import asyncio as aioredis
 
 from app import repository
-from app.core.database import get_redis_pool
-from app.enums.error_code import ErrorCode
+from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short
+from app.exception.exception_handlers_code import ErrorCode
 from app.exception.exception_handlers_initializer import NotUniqueError
-from app.repository.user_repository import verify_password
 from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
-from app.schemas.user_schema import UserCreate, User, UserUpdate
-from app.security.jwt.jwt_authentication import GetCurrentUser
+from app.schemas.user_schema import UserCreate, User, UserUpdate, UserShort
 from app.security.jwt.jwt_service import jwt_service
+from app.service.password_service import password_service
 
 router = APIRouter()
 
@@ -34,7 +33,7 @@ async def signup(req: UserCreate):
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
-async def signin(user: Annotated[User, Depends(repository.user.validate_user)], response: Response):
+async def signin(user: Annotated[User, Depends(validate_user)], response: Response):
     """
     signin
 
@@ -49,19 +48,40 @@ async def signin(user: Annotated[User, Depends(repository.user.validate_user)], 
     return response
 
 
+@router.get("/me", response_model=CommonResponse | ErrorResponse)
+async def get_user_me(current_user: Annotated[UserShort, Depends(get_current_user_short)]):
+    """
+    get_user_me_short
+    """
+    return CommonResponse(success=True, data=current_user, request=current_user.username)
+
+
+@router.get("/users", response_model=CommonResponse | ErrorResponse)
+async def get_users():
+    """
+    get_user_me_short
+    """
+    user_list = await repository.user_short.get_multi()
+    return CommonResponse(success=True, data=user_list)
+
+
 @router.put("/update", response_model=CommonResponse | ErrorResponse)
-async def update_user(req: UserUpdate, current_user: Annotated[User, Depends(GetCurrentUser)]):
+async def update_user(req: UserUpdate, current_user: Annotated[User, Depends(get_current_user)]):
     """
     Update user.
     """
-    if req.original_password and not verify_password(password=req.original_password, hashed_password=current_user.hashed_password):
-        raise NotUniqueError(info="비밀번호가 일치하지 블라블라", code=ErrorCode.BS101)
+    if req.original_password:
+        if not password_service.verify_password(
+                password=req.original_password,
+                hashed_password=current_user.hashed_password
+        ):
+            raise NotUniqueError(info="비밀번호가 일치하지 블라블라", code=ErrorCode.BS101)
     user = await repository.user.update(db_obj=current_user, obj_in=req)
     return CommonResponse(success=True, message=user.username)
 
 
 @router.post("/token", response_model=CommonResponse | ErrorResponse)
-async def token_check(user: Annotated[User, Depends(GetCurrentUser)]):
+async def token_check(user: Annotated[User, Depends(get_current_user)]):
     data = {"id": str(user.id)}
     access_token = jwt_service.create_access_token(data)
     token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
@@ -71,6 +91,7 @@ async def token_check(user: Annotated[User, Depends(GetCurrentUser)]):
 @router.post("/logout", response_model=CommonResponse | ErrorResponse)
 def logout(response: Response):
     response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token")
     return CommonResponse(success=True, message="logout Successful")
 
 

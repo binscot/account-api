@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.enums.error_code import ErrorCode
+from app.exception.exception_handlers_code import ErrorCode
 
 
 class CredentialsException(Exception):

@@ -1,7 +1,7 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.enums.error_code import ErrorCode
+from app.exception.exception_handlers_code import ErrorCode
 from app.schemas.response_schema import ErrorResponse
 from app.exception import exception_handlers_initializer
 

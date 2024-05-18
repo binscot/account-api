@@ -22,7 +22,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get_multi(self, *, page: int = 0, page_break: bool = False) -> list[ModelType]:
         offset = {"skip": page * settings.MULTI_MAX, "limit": settings.MULTI_MAX} if page_break else {}
-        return await self.model.find(self.model, **offset)
+
+        cursor = self.model.find(**offset)
+        return await cursor.to_list(length=None)
 
     async def create(self, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)

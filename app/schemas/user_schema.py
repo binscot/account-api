@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_validator
 from pydantic import EmailStr
 from pydantic_core.core_schema import FieldValidationInfo
 
-from app.enums.error_code import ErrorCode
+from app.exception.exception_handlers_code import ErrorCode
 from app.exception.exception_handlers_initializer import ValidationError
 
 

@@ -9,10 +9,10 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    API_V1_STR: str = "/api/account"
+    API_V1_STR: str = "/api/v1"
 
     CRYPT_CONTEXT: list[str] = os.getenv('CRYPT_CONTEXT')
-
+    TOKEN_TYPE: str = os.getenv('TOKEN_TYPE')
     JWT_SECRET_KEY: str = os.getenv('JWT_SECRET_KEY')
     JWT_REFRESH_SECRET_KEY: str = os.getenv('JWT_REFRESH_SECRET_KEY')
     HASH_ALGORITHM: str = os.getenv('HASH_ALGORITHM')

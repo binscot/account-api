@@ -2,7 +2,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 from fastapi import Request
 
-from app.enums.error_code import ErrorCode
+from app.exception.exception_handlers_code import ErrorCode
 
 
 class CommonResponse(BaseModel):

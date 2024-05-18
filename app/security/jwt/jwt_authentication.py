@@ -1,11 +1,11 @@
+from typing import Annotated
+
 from fastapi import Depends, Request
 from fastapi.security.utils import get_authorization_scheme_param
-from typing import Annotated
-from app.security.jwt.jwt_service import jwt_service
-from app.enums.error_code import ErrorCode
+
+from app.exception.exception_handlers_code import ErrorCode
 from app.exception.exception_handlers_initializer import JwtError
-from app.repository import user_repository
-from app.schemas.user_schema import User
+from app.security.jwt.jwt_service import jwt_service
 
 
 async def validate_token(request: Request) -> str | None:
@@ -27,14 +27,9 @@ class JWTAuthentication:
                 _id = valid_payload.get("id")
             else:
                 raise JwtError(info={"e": "Expired or changed token."}, code=ErrorCode.BS108)
+            return _id
         except Exception as e:
             raise JwtError(info={"e": e.__str__()}, code=ErrorCode.BS108)
-        else:
-            user = await user_repository.user.get(_id)
-            if user is None:
-                raise JwtError(info={"e": "Non-existent user"}, code=ErrorCode.BS108)
-            else:
-                return user
 
 
-GetCurrentUser = JWTAuthentication()
+GetCurrentUserByToken = JWTAuthentication()
