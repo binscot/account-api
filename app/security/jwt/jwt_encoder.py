@@ -7,13 +7,11 @@ from jose import jwt
 
 class AbstractJWTEncoder(ABC):
     """
-    JWT 인코더 추상클래스
-    encode 메소드를 구현
-
-    :param data: JWT에 담을 데이터
-    :param expires_delta: JWT 만료 시간
-    :param secret_key: JWT 암호화 키
-    :param algorithm: JWT 암호화 알고리즘
+    JWT encode
+    @:param data: JWT에 담을 데이터
+    @:param expires_delta: JWT 만료 시간
+    @:param secret_key: JWT 암호화 키
+    @:param algorithm: JWT 암호화 알고리즘
     """
 
     @abstractmethod

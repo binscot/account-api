@@ -6,7 +6,6 @@ from pydantic import BaseModel, field_validator
 from pydantic import EmailStr
 from pydantic_core.core_schema import FieldValidationInfo
 
-from app.exception.exception_handlers_code import ErrorCode
 from app.exception.exception_handlers_initializer import ValidationError
 
 
@@ -23,7 +22,7 @@ class User(Document):
     created_at: datetime = datetime.utcnow()
 
     class Settings:
-        name = "User"
+        name = "users"
 
 
 class UserShort(Document):
@@ -31,7 +30,7 @@ class UserShort(Document):
     created_at: datetime
 
     class Settings:
-        name = "User"
+        name = "users"
 
 
 class UserCreate(BaseModel):
@@ -44,13 +43,13 @@ class UserCreate(BaseModel):
     @field_validator("*")
     def not_empty(cls, v):
         if not v or not v.strip():
-            raise ValidationError(v, ErrorCode.BS111)
+            raise ValidationError(info="데이터를 입력해주세요")
         return v
 
     @field_validator('password2')
     def passwords_match(cls, v, info: FieldValidationInfo):
         if 'password1' in info.data and v != info.data['password1']:
-            raise ValidationError(v, ErrorCode.BS110)
+            raise ValidationError(info="비밀번호가 일치하지 않습니다.")
         return v
 
 
@@ -65,11 +64,11 @@ class UserUpdate(BaseModel):
     @field_validator("*")
     def not_empty(cls, v):
         if not v or not v.strip():
-            raise ValidationError(v, ErrorCode.BS111)
+            raise ValidationError(v, "데이터를 입력해주세요")
         return v
 
     @field_validator('new_password_check')
     def passwords_match(cls, v, info: FieldValidationInfo):
         if 'new_password' in info.data and v != info.data['new_password']:
-            raise ValidationError(v, ErrorCode.BS110)
+            raise ValidationError(v, "비밀번호가 일치하지 않습니다.")
         return v

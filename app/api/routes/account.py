@@ -3,13 +3,13 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
 
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, Response
 from redis import asyncio as aioredis
 
 from app import repository
 from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short
-from app.exception.exception_handlers_code import ErrorCode
-from app.exception.exception_handlers_initializer import NotUniqueError
+from app.exception.exception_handlers_initializer import NotUniqueError, CredentialsException
 from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
 from app.schemas.user_schema import UserCreate, User, UserUpdate, UserShort
 from app.security.jwt.jwt_service import jwt_service
@@ -19,10 +19,10 @@ router = APIRouter()
 
 
 @router.post("/signup", response_model=CommonResponse | ErrorResponse)
-async def signup(req: UserCreate):
+async def register_user(req: UserCreate):
     user = await repository.user.get_by_email(username=req.username)
     if user:
-        raise NotUniqueError(info=ErrorCode.BS101.message(), code=ErrorCode.BS101)
+        raise NotUniqueError(info="중복된 아이디")
     new_user = await repository.user.create(obj_in=req)
     return CommonResponse(
         success=True,
@@ -33,18 +33,25 @@ async def signup(req: UserCreate):
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
-async def signin(user: Annotated[User, Depends(validate_user)], response: Response):
+async def perform_login(user: Annotated[User, Depends(validate_user)], response: Response):
     """
     signin
-
     """
-    data = {"id": str(user.id)}
-    access_token = jwt_service.create_access_token(data)
-    refresh_token = jwt_service.create_refresh_token(data)
-    token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
+    token_data = {"id": str(user.id)}
+    access_token = jwt_service.create_access_token(token_data)
+    refresh_token = jwt_service.create_refresh_token(token_data)
+    token_response = TokenResponse(
+        access_token=access_token,
+        username=user.username,
+        id=str(user.id)
+    )
     response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True)
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True)
-    response = CommonResponse(success=True, data=token_response, request=user.username)
+    response = CommonResponse(
+        success=True,
+        data=token_response,
+        request=user.username
+    )
     return response
 
 
@@ -59,7 +66,8 @@ async def get_user_me(current_user: Annotated[UserShort, Depends(get_current_use
 @router.get("/users", response_model=CommonResponse | ErrorResponse)
 async def get_users():
     """
-    get_user_me_short
+    get_users
+    admin only
     """
     user_list = await repository.user_short.get_multi()
     return CommonResponse(success=True, data=user_list)
@@ -75,13 +83,23 @@ async def update_user(req: UserUpdate, current_user: Annotated[User, Depends(get
                 password=req.original_password,
                 hashed_password=current_user.hashed_password
         ):
-            raise NotUniqueError(info="비밀번호가 일치하지 블라블라", code=ErrorCode.BS101)
+            raise CredentialsException(info="현재 비밀번호가 일치하지 않습니다.")
     user = await repository.user.update(db_obj=current_user, obj_in=req)
-    return CommonResponse(success=True, message=user.username)
+    return CommonResponse(success=True, data=user.username, message="update Successful")
+
+
+@router.delete("/delete", response_model=CommonResponse | ErrorResponse)
+async def delete_user(current_user: Annotated[User, Depends(get_current_user)]):
+    """
+    Delete user.
+    """
+
+    user = await repository.user_short.remove(_id=current_user.id)
+    return CommonResponse(success=True, data=user, message="delete Successful")
 
 
 @router.post("/token", response_model=CommonResponse | ErrorResponse)
-async def token_check(user: Annotated[User, Depends(get_current_user)]):
+async def get_access_token(user: Annotated[User, Depends(get_current_user)]):
     data = {"id": str(user.id)}
     access_token = jwt_service.create_access_token(data)
     token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))

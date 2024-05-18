@@ -46,7 +46,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     async def remove(self, *, _id: PydanticObjectId) -> ModelType:
-        obj = await self.model.get(id)
+        obj = await self.model.get(_id)
         if obj:
             await self.model.delete(obj)
         return obj

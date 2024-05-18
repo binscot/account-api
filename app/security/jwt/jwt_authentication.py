@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import Depends, Request
 from fastapi.security.utils import get_authorization_scheme_param
 
-from app.exception.exception_handlers_code import ErrorCode
 from app.exception.exception_handlers_initializer import JwtError
 from app.security.jwt.jwt_service import jwt_service
 
@@ -12,7 +11,7 @@ async def validate_token(request: Request) -> str | None:
     authorization = request.headers.get("Authorization")
     scheme, param = get_authorization_scheme_param(authorization)
     if not authorization or scheme.lower() != "bearer":
-        raise JwtError(info={"e": "Token is invalid", "scheme": scheme}, code=ErrorCode.BS108)
+        raise JwtError(info={"e": "Token is invalid", "scheme": scheme})
     return param
 
 
@@ -24,12 +23,10 @@ class JWTAuthentication:
         try:
             valid_payload = jwt_service.check_token_expired(token)
             if valid_payload:
-                _id = valid_payload.get("id")
-            else:
-                raise JwtError(info={"e": "Expired or changed token."}, code=ErrorCode.BS108)
-            return _id
+                return valid_payload.get("id")
+            raise JwtError(info="Expired or changed token.")
         except Exception as e:
-            raise JwtError(info={"e": e.__str__()}, code=ErrorCode.BS108)
+            raise JwtError(info={"e": e.__str__()})
 
 
 GetCurrentUserByToken = JWTAuthentication()

@@ -1,10 +1,5 @@
-from typing import Annotated
 from typing import Any, Dict, Union
 
-from fastapi import Depends, security
-
-from app.exception.exception_handlers_code import ErrorCode
-from app.exception.exception_handlers_initializer import NotUniqueError
 from app.repository.base import BaseRepository
 from app.schemas.user_schema import User
 from app.schemas.user_schema import UserShort, UserCreate, UserUpdate
@@ -38,14 +33,6 @@ class UserRepository(BaseRepository[User, UserShort, UserUpdate]):
             del update_data["new_password_check"]
             update_data["hashed_password"] = hashed_password
         return await super().update(db_obj=db_obj, obj_in=update_data)
-
-    async def validate_user(self, form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()]) -> User | None:
-        db_user = await self.get_by_email(username=form_data.username)
-        if not db_user:
-            raise NotUniqueError(info=ErrorCode.BS103.message(), code=ErrorCode.BS103)
-        if not password_service.verify_password(password=form_data.password, hashed_password=db_user.hashed_password):
-            raise NotUniqueError(info=ErrorCode.BS104.message(), code=ErrorCode.BS104)
-        return db_user
 
 
 user = UserRepository(User)

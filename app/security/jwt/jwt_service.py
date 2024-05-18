@@ -3,11 +3,11 @@ from zoneinfo import ZoneInfo
 
 from fastapi import Request
 from fastapi.security.utils import get_authorization_scheme_param
+
 from app.core.config import settings
-from app.exception.exception_handlers_code import ErrorCode
-from app.exception.exception_handlers_initializer import JwtError
 from app.security.jwt.jwt_decoder import JWTDecoder
 from app.security.jwt.jwt_encoder import JWTEncoder
+from app.exception.exception_handlers_initializer import JwtError
 
 JWT_SECRET_KEY = settings.JWT_SECRET_KEY
 HASH_ALGORITHM = settings.HASH_ALGORITHM
@@ -18,7 +18,10 @@ REFRESH_TOKEN_EXPIRE_MINUTES = settings.REFRESH_TOKEN_EXPIRE_MINUTES
 
 class JWTService:
     """
-    JWT 로그인시 access token, refresh token을 생성하는 로직
+    create JWT access token
+    create JWT refresh token
+    check JWT token expired
+    validate JWT token
     """
 
     def __init__(

@@ -2,8 +2,6 @@ from typing import Any, Optional
 from pydantic import BaseModel
 from fastapi import Request
 
-from app.exception.exception_handlers_code import ErrorCode
-
 
 class CommonResponse(BaseModel):
     success: bool
@@ -13,17 +11,15 @@ class CommonResponse(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    error_code: Optional[str]
+    error_code: Optional[str] = None
     success: bool
-    message: Optional[str]
+    message: Optional[str] = None
     request: Any
 
     @staticmethod
     def setting(request: Request, exc):
         return ErrorResponse(
-            error_code=exc.code,
             success=False,
-            message=ErrorCode.message(exc.code),
             request={
                 "client": request.client,
                 "url": str(request.url),
