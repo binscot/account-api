@@ -9,6 +9,7 @@ MONGO_PORT = settings.MONGO_PORT
 MONGO_PASSWORD = settings.MONGO_PASSWORD
 MONGO_ID = settings.MONGO_ID
 MONGO_DB_NAME = settings.MONGO_DB_NAME
+MONGO_SERVER_URL = settings.MONGO_SERVER_URL
 
 
 class MongoDBClient:
@@ -18,7 +19,7 @@ class MongoDBClient:
         if not hasattr(cls, "instance") or cls.instance is None:
             cls.instance = super(MongoDBClient, cls).__new__(cls)
             cls.instance.mongo_client = motor_asyncio.AsyncIOMotorClient(
-                f"mongodb://{MONGO_ID}:{MONGO_PASSWORD}@{MONGO_SERVER}:{MONGO_PORT}"
+                f"mongodb://{MONGO_SERVER_URL}"
             )
             cls.instance.db = cls.instance.mongo_client[MONGO_DB_NAME]
         return cls.instance

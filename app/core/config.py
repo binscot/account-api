@@ -23,12 +23,14 @@ class Settings(BaseSettings):
     REDIS_PORT: str = os.getenv('REDIS_PORT')
     REDIS_PASSWORD: str = os.getenv('REDIS_PASSWORD')
     REDIS_DB: str = os.getenv('REDIS_DB')
+    REDIS_SERVER_URL: str = os.getenv('REDIS_SERVER_URL')
 
     MONGO_SERVER: str = os.getenv('MONGO_SERVER')
     MONGO_PORT: str = os.getenv('MONGO_PORT')
     MONGO_PASSWORD: str = os.getenv('MONGO_PASSWORD')
     MONGO_ID: str = os.getenv('MONGO_ID')
     MONGO_DB_NAME: str = os.getenv('MONGO_DB_NAME')
+    MONGO_SERVER_URL: str = os.getenv('MONGO_SERVER_URL')
 
     class Config:
         case_sensitive = True

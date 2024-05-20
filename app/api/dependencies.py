@@ -48,4 +48,4 @@ async def is_admin(_id: Annotated[str, Depends(GetCurrentUserByToken)]) -> bool 
 
 
 async def get_redis_pool():
-    return await aioredis.from_url(f"redis://:{REDIS_PASSWORD}@{REDIS_SERVER}:{REDIS_PORT}/{REDIS_DB}")
+    return await aioredis.from_url(f"redis://:{REDIS_SERVER_URL}")

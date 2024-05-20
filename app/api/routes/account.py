@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, Response
 from redis import asyncio as aioredis
 
