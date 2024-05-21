@@ -20,6 +20,15 @@ async def lifespan(app: FastAPI):
         raise e
 
 
-app = FastAPI(lifespan=lifespan)
-app.include_router(api_router, prefix=config.settings.API_V1_STR)
-setup_exception_handlers(app)
+def create_app() -> FastAPI:
+    application = FastAPI(
+        title="binscot-api",
+        version="v1",
+        lifespan=lifespan
+    )
+    application.include_router(api_router, prefix=config.settings.API_V1_STR)
+    setup_exception_handlers(application)
+    return application
+
+
+app = create_app()
