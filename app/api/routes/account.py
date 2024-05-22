@@ -83,8 +83,9 @@ async def update_user(req: UserUpdate, current_user: Annotated[User, Depends(get
                 hashed_password=current_user.hashed_password
         ):
             raise CredentialsException(info="현재 비밀번호가 일치하지 않습니다.")
-    user = await repository.user.update(db_obj=current_user, obj_in=req)
-    return CommonResponse(success=True, data=user.username, message="update Successful")
+    await repository.user.update(db_obj=current_user, obj_in=req)
+    update_user_short = await repository.user_short.get_by_email_short(username=current_user.username)
+    return CommonResponse(success=True, data=update_user_short, message="update Successful")
 
 
 @router.delete("/delete", response_model=CommonResponse | ErrorResponse)

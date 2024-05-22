@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     MONGO_PASSWORD: str = os.getenv('MONGO_PASSWORD')
     MONGO_ID: str = os.getenv('MONGO_ID')
     MONGO_DB_NAME: str = os.getenv('MONGO_DB_NAME')
+    MONGO_TEST_DB_NAME: str = os.getenv('MONGO_TEST_DB_NAME')
     MONGO_SERVER_URL: str = os.getenv('MONGO_SERVER_URL')
 
     class Config:

@@ -28,6 +28,11 @@ class User(Document):
 class UserShort(Document):
     username: EmailStr
     created_at: datetime
+    join_type: str
+    service_type: str
+    gender: Optional[str] = None
+    birthday: Optional[str] = None
+    phone_number: Optional[str] = None
 
     class Settings:
         name = "users"
