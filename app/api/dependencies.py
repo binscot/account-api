@@ -2,12 +2,13 @@ from typing import Annotated
 
 from fastapi import Depends, security
 from redis import asyncio as aioredis
+
 from app import repository
-from app.exception.exception_handlers_initializer import NotUniqueError, JwtError, ValidationError
+from app.core.config import settings
+from app.exception.exception_handlers_initializer import JwtError, ValidationError
 from app.schemas.user_schema import User, UserShort
 from app.security.jwt.jwt_authentication import GetCurrentUserByToken
 from app.service.password_service import password_service
-from app.core.config import settings
 
 REDIS_SERVER = settings.REDIS_SERVER
 REDIS_PORT = settings.REDIS_PORT
