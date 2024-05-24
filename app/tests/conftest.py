@@ -1,7 +1,6 @@
 """Pytest fixtures."""
 
 import pytest
-from asgi_lifespan import LifespanManager
 from beanie import init_beanie
 from httpx import AsyncClient
 from motor import motor_asyncio
@@ -21,30 +20,35 @@ async def mock_database():
         recreate_views=True,
         document_models=[User, UserShort],
     )
+    return mongo_client
 
 
-async def clear_database(appa) -> None:
-    print(appa)
-    print(1)
-    # await mongo_client.drop_database(MONGO_TEST_DB_NAME)
-    # mongo_client.close()
-    # print("DB 연결 종료되었습니다.")
-
-
-@pytest.fixture
-async def client_test(mocker):
-    mongo_client = await mock_database()
-    mocker.patch("app.core.database.MongoDBClient.connect", return_value=mongo_client)
-    async with LifespanManager(app):
-        app.mongo_client = mongo_client
-        async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as _client:
-            try:
-                yield _client
-            except Exception as exc:
-                print(exc)
-
+@pytest.fixture(scope="function")
+async def test_client():
+    # Create an AsyncClient instance to make requests to the FastAPI api
+    async with AsyncClient(app=app, base_url="http://test", follow_redirects=True) as ac:
+        yield ac
 
 
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture(scope="function", autouse=False)
+async def initialized_db():
+    # Initialize the database and return the client
+    client = await mock_database()
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="function", autouse=False)
+async def initialized_and_drop_db():
+    # Initialize the database and return the client
+    client = await mock_database()
+    yield client
+    # Teardown - clean up the database after each test
+    await client.drop_database(MONGO_TEST_DB_NAME)
+    print('test db drop')
+    client.close()

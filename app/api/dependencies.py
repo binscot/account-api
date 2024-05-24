@@ -13,6 +13,7 @@ REDIS_SERVER = settings.REDIS_SERVER
 REDIS_PORT = settings.REDIS_PORT
 REDIS_DB = settings.REDIS_DB
 REDIS_PASSWORD = settings.REDIS_PASSWORD
+REDIS_SERVER_URL = settings.REDIS_SERVER_URL
 
 
 async def validate_user(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()]) -> User | None:
