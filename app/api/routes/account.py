@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
-from redis import asyncio as aioredis
+from redis.asyncio import Redis
 
 from app import repository
 from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short
@@ -114,7 +114,7 @@ def logout(response: Response):
 
 
 @router.post("/redis_test", response_model=CommonResponse | ErrorResponse)
-async def redis_test(key: str, value: str, redis: Annotated[aioredis.Redis, Depends(get_redis_pool)]):
+async def redis_test(key: str, value: str, redis: Annotated[Redis, Depends(get_redis_pool)]):
     """
     Session 생성
     - 방장이 방을 생성한다.
