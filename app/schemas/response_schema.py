@@ -2,6 +2,8 @@ from typing import Any, Optional
 from pydantic import BaseModel
 from fastapi import Request
 
+from app.schemas.user_schema import UserShort
+
 
 class CommonResponse(BaseModel):
     success: bool
@@ -32,3 +34,8 @@ class TokenResponse(BaseModel):
     access_token: Optional[str]
     username: Optional[str]
     id: Optional[str]
+
+
+class SignInData(BaseModel):
+    token_data: TokenResponse
+    user_data: UserShort

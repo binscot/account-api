@@ -9,7 +9,7 @@ from redis.asyncio import Redis
 from app import repository
 from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short
 from app.exception.exception_handlers_initializer import NotUniqueError, CredentialsException
-from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse
+from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse, SignInData
 from app.schemas.user_schema import UserCreate, User, UserUpdate, UserShort
 from app.security.jwt.jwt_service import jwt_service
 from app.service.password_service import password_service
@@ -48,7 +48,7 @@ async def perform_login(user: Annotated[UserShort, Depends(validate_user)], resp
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True)
     response = CommonResponse(
         success=True,
-        data=[token_response, user],
+        data=SignInData(token_data=token_response, user_data=user),
         request=None
     )
     return response
