@@ -48,7 +48,7 @@ async def perform_login(user: Annotated[UserShort, Depends(validate_user)], resp
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True)
     response = CommonResponse(
         success=True,
-        data=[token_response, UserShort],
+        data=[token_response, user],
         request=None
     )
     return response
