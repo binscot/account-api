@@ -26,6 +26,7 @@ class User(Document):
 
 
 class UserShort(Document):
+    admin: bool
     username: EmailStr
     created_at: datetime
     join_type: str

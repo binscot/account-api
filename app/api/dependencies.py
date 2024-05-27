@@ -17,13 +17,23 @@ REDIS_PASSWORD = settings.REDIS_PASSWORD
 REDIS_SERVER_URL = settings.REDIS_SERVER_URL
 
 
-async def validate_user(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()]) -> User | None:
+async def validate_user(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()]) -> UserShort | None:
     db_user = await repository.user.get_by_email(username=form_data.username)
     if not db_user:
         raise ValidationError(info="해당 아이디를 가진 사용자가 존재하지 않습니다.")
     if not password_service.verify_password(password=form_data.password, hashed_password=db_user.hashed_password):
         raise ValidationError(info="비밀번호가 일치하지 않습니다.")
-    return db_user
+    return UserShort(
+        id=db_user.id,
+        admin=db_user.admin,
+        username=db_user.username,
+        created_at=db_user.created_at,
+        join_type=db_user.join_type,
+        service_type=db_user.service_type,
+        gender=db_user.gender,
+        birthday=db_user.birthday,
+        phone_number=db_user.phone_number
+    )
 
 
 async def get_current_user(_id: Annotated[str, Depends(GetCurrentUserByToken)]) -> User | None:

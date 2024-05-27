@@ -32,7 +32,7 @@ async def register_user(req: UserCreate):
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
-async def perform_login(user: Annotated[User, Depends(validate_user)], response: Response):
+async def perform_login(user: Annotated[UserShort, Depends(validate_user)], response: Response):
     """
     signin
     """
@@ -54,8 +54,8 @@ async def perform_login(user: Annotated[User, Depends(validate_user)], response:
     return response
 
 
-@router.get("/me", response_model=CommonResponse | ErrorResponse)
-async def get_user_me(current_user: Annotated[UserShort, Depends(get_current_user_short)]):
+@router.get("/info", response_model=CommonResponse | ErrorResponse)
+async def get_user_info(current_user: Annotated[UserShort, Depends(get_current_user_short)]):
     """
     get_user_me_short
     """

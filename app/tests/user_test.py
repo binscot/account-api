@@ -73,7 +73,7 @@ async def test_get_current_user(user, headers, test_client, initialized_db):
     signin_user_data = signin_user["data"]
     access_token = signin_user_data["access_token"]
     authorization = f"bearer {access_token}"
-    get_current_user = await test_client.get("/api/v1/account/me", headers={
+    get_current_user = await test_client.get("/api/v1/account/info", headers={
         "Authorization": authorization
     })
 
