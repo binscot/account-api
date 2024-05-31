@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import logging.config
 
-project_dir = Path(__file__).parents[4]
+project_dir = Path(__file__).parents[2]
 log_dir = os.path.join(project_dir, "logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
