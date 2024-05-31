@@ -1,0 +1,29 @@
+version: 1
+disable_existing_loggers: false
+formatters:
+  standard:
+    format: "[%(levelname)s] [%(asctime)s] - %(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: standard
+  file:
+    class: logging.FileHandler
+    formatter: standard
+    filename:
+loggers:
+  uvicorn:
+    handlers: [console, file]
+    level: INFO
+    propagate: true
+  uvicorn.error:
+    handlers: [console, file]
+    level: ERROR
+    propagate: false
+  uvicorn.access:
+    handlers: [console, file]
+    level: INFO
+    propagate: false
+root:
+  handlers: [console, file]
+  level: INFO

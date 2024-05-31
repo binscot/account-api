@@ -3,7 +3,7 @@ from typing import Any, Dict, Union
 from app.repository.base import BaseRepository
 from app.schemas.user_schema import User
 from app.schemas.user_schema import UserShort, UserCreate, UserUpdate
-from app.service.password_service import password_service
+from app.security.password_service import password_service
 
 
 class UserRepository(BaseRepository[User, UserShort, UserUpdate]):

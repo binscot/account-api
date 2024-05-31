@@ -1,10 +1,8 @@
 import os
-from os import path
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
-base_dir = path.dirname(path.dirname(path.dirname(path.abspath(__file__))))
 load_dotenv()
 
 

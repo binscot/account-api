@@ -7,14 +7,16 @@ from fastapi import APIRouter, Depends, Response
 from redis.asyncio import Redis
 
 from app import repository
-from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short
-from app.exception.exception_handlers_initializer import NotUniqueError, CredentialsException
-from app.schemas.response_schema import CommonResponse, ErrorResponse, TokenResponse, SignInData
+from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short, jwt_authentication, \
+    validate_token
+from app.core.logging.logging_handlers import LoggingAPIRoute
+from app.exception.exception_handlers_initializer import NotUniqueError, CredentialsException, JwtError
+from app.schemas.response_schema import CommonResponse, ErrorResponse, SignInData
 from app.schemas.user_schema import UserCreate, User, UserUpdate, UserShort
-from app.security.jwt.jwt_service import jwt_service
-from app.service.password_service import password_service
+from app.security.password_service import password_service
+from app.security.token_service import set_token_response
 
-router = APIRouter()
+router = APIRouter(route_class=LoggingAPIRoute)
 
 
 @router.post("/signup", response_model=CommonResponse | ErrorResponse)
@@ -32,20 +34,15 @@ async def register_user(req: UserCreate):
 
 
 @router.post("/signin", response_model=CommonResponse | ErrorResponse)
-async def perform_login(user: Annotated[UserShort, Depends(validate_user)], response: Response):
+async def perform_login(user: Annotated[UserShort, Depends(validate_user)], redis: Annotated[Redis, Depends(get_redis_pool)], response: Response):
     """
     signin
     """
-    token_data = {"id": str(user.id)}
-    access_token = jwt_service.create_access_token(token_data)
-    refresh_token = jwt_service.create_refresh_token(token_data)
-    token_response = TokenResponse(
-        access_token=access_token,
-        username=user.username,
-        id=str(user.id)
+    token_response = await set_token_response(
+        _id=str(user.id),
+        response=response,
+        redis=redis
     )
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True)
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True)
     response = CommonResponse(
         success=True,
         data=SignInData(token_data=token_response, user_data=user),
@@ -98,12 +95,27 @@ async def delete_user(current_user: Annotated[User, Depends(get_current_user)]):
     return CommonResponse(success=True, data=user, message="delete Successful")
 
 
-@router.post("/token", response_model=CommonResponse | ErrorResponse)
-async def get_access_token(user: Annotated[User, Depends(get_current_user)]):
-    data = {"id": str(user.id)}
-    access_token = jwt_service.create_access_token(data)
-    token_response = TokenResponse(access_token=access_token, username=user.username, id=str(user.id))
-    return CommonResponse(success=True, data=token_response)
+@router.post("/token/reissue", response_model=CommonResponse | ErrorResponse)
+async def reissue_token(
+        redis: Annotated[Redis, Depends(get_redis_pool)],
+        _id: Annotated[str, Depends(jwt_authentication)],
+        token: Annotated[str, Depends(validate_token)],
+        response: Response
+):
+    redis_refresh_token = await redis.get(_id)
+    if redis_refresh_token.decode('utf-8') != token:
+        raise JwtError(info="changed token.")
+    token_response = await set_token_response(
+        _id=_id,
+        response=response,
+        redis=redis
+    )
+    response = CommonResponse(
+        success=True,
+        data=token_response,
+        request=None
+    )
+    return response
 
 
 @router.post("/logout", response_model=CommonResponse | ErrorResponse)

@@ -2,6 +2,7 @@ from beanie import init_beanie
 from motor import motor_asyncio
 
 from app.core.config import settings
+from app.core.logging import logger
 from app.schemas.user_schema import User, UserShort
 
 MONGO_SERVER = settings.MONGO_SERVER
@@ -27,13 +28,14 @@ class MongoDBClient:
     async def connect(self):
         try:
             await init_beanie(database=self.db, document_models=[User, UserShort])
-            print("DB 와 연결되었습니다.")
+            logger.info("mongo client is connected")
         except Exception as e:
-            print(f"MongoDB 연결 에러: {e}")
+            logger.error(f"mongo client connection error: {e}")
 
     async def disconnect(self):
         self.mongo_client.close()
-        print("DB 연결 종료되었습니다.")
+        logger.info("mongo_client closed")
+        logger.info("binscot api close")
 
     async def get_collection(self, collection_name):
         return self.db[collection_name]
