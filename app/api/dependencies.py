@@ -22,7 +22,7 @@ REDIS_SERVER_URL = settings.REDIS_SERVER_URL
 
 
 async def get_redis_pool():
-    return await aioredis.from_url(f"redis://:{REDIS_SERVER_URL}")
+    return await aioredis.from_url(f"redis://{REDIS_SERVER_URL}")
 
 
 async def validate_token(request: Request) -> str | None:
