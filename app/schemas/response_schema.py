@@ -32,6 +32,7 @@ class ErrorResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: Optional[str]
+    refresh_token: Optional[str]
     username: Optional[str]
     id: Optional[str]
 

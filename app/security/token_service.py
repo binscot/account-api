@@ -18,6 +18,7 @@ async def set_token_response(_id: str, response: Response, redis: Redis) -> Toke
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True)
     token_response = TokenResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         username=None,
         id=_id
     )
