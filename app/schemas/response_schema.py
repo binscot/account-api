@@ -25,7 +25,11 @@ class ErrorResponse(BaseModel):
             request={
                 "client": request.client,
                 "url": str(request.url),
-                "body": exc.info
+                "body": {
+                    "error": exc.error,
+                    "code": exc.code,
+                    "info": exc.info,
+                }
             }
         ).__dict__
 

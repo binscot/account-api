@@ -8,8 +8,9 @@ from redis.asyncio import Redis
 
 from app import repository
 from app.core.config import settings
-from app.exception.exception_handlers_initializer import JwtError
-from app.exception.exception_handlers_initializer import ValidationError
+from app.exceptions.error_code import ErrorCode
+from app.exceptions.exception_handlers_initializer import JwtError, InvalidTokenError, ExpiredTokenError, \
+    NoApplicableDataError, InvalidPasswordError, PermissionDeniedError
 from app.schemas.user_schema import User, UserShort
 from app.security.jwt.jwt_service import jwt_service
 from app.security.password_service import password_service
@@ -29,7 +30,11 @@ async def validate_token(request: Request) -> str | None:
     authorization = request.headers.get("Authorization")
     scheme, param = get_authorization_scheme_param(authorization)
     if not authorization or scheme.lower() != "bearer":
-        raise JwtError(info={"e": "Token is invalid", "scheme": scheme})
+        raise InvalidTokenError(
+            error=ErrorCode.InvalidTokenError,
+            code=ErrorCode.InvalidTokenError.code(),
+            info=f"e: Token is invalid, scheme: {scheme}"
+        )
     return param
 
 
@@ -38,9 +43,17 @@ async def jwt_authentication(token: Annotated[str, Depends(validate_token)]) -> 
         valid_payload = jwt_service.check_token_expired(token)
         if valid_payload:
             return valid_payload.get("id")
-        raise JwtError(info="Expired or changed token.")
+        raise ExpiredTokenError(
+            error=ErrorCode.ExpiredTokenError,
+            code=ErrorCode.ExpiredTokenError.code(),
+            info="Expired or changed token."
+        )
     except Exception as e:
-        raise JwtError(info={"e": e.__str__()})
+        raise JwtError(
+            error=ErrorCode.JwtError,
+            code=ErrorCode.JwtError.code(),
+            info=f"e: {e.__str__()}"
+        )
 
 
 async def check_refresh_token(
@@ -55,9 +68,17 @@ async def check_refresh_token(
 async def validate_user(form_data: Annotated[security.OAuth2PasswordRequestForm, Depends()]) -> UserShort | None:
     db_user = await repository.user.get_by_email(username=form_data.username)
     if not db_user:
-        raise ValidationError(info="해당 아이디를 가진 사용자가 존재하지 않습니다.")
+        raise NoApplicableDataError(
+            error= ErrorCode.NoApplicableDataError,
+            code=ErrorCode.NoApplicableDataError.code(),
+            info="User with this ID does not exist."
+        )
     if not password_service.verify_password(password=form_data.password, hashed_password=db_user.hashed_password):
-        raise ValidationError(info="비밀번호가 일치하지 않습니다.")
+        raise InvalidPasswordError(
+            error=ErrorCode.InvalidPasswordError,
+            code=ErrorCode.InvalidPasswordError.code(),
+            info="The password does not match."
+        )
     return UserShort(
         id=db_user.id,
         admin=db_user.admin,
@@ -74,21 +95,33 @@ async def validate_user(form_data: Annotated[security.OAuth2PasswordRequestForm,
 async def get_current_user(_id: Annotated[str, Depends(jwt_authentication)]) -> User | None:
     user = await repository.user.get(_id)
     if user is None:
-        raise JwtError(info="Non-existent user")
+        raise NoApplicableDataError(
+            error=ErrorCode.NoApplicableDataError,
+            code=ErrorCode.NoApplicableDataError.code(),
+            info="Non-existent user"
+        )
     return user
 
 
 async def get_current_user_short(_id: Annotated[str, Depends(jwt_authentication)]) -> UserShort | None:
     user = await repository.user_short.get(_id)
     if user is None:
-        raise JwtError(info="Non-existent user")
+        raise NoApplicableDataError(
+            error=ErrorCode.NoApplicableDataError,
+            code=ErrorCode.NoApplicableDataError.code(),
+            info="Non-existent user"
+        )
     return user
 
 
 async def is_admin(_id: Annotated[str, Depends(jwt_authentication)]) -> bool | None:
     user = await repository.user_short.get(_id)
     if user is None:
-        raise JwtError(info="is not Admin User")
+        raise PermissionDeniedError(
+            error=ErrorCode.PermissionDeniedError,
+            code=ErrorCode.PermissionDeniedError.code(),
+            info="is not Admin User"
+        )
     if user.admin:
         return True
     return False

@@ -5,9 +5,10 @@ from fastapi import Request
 from fastapi.security.utils import get_authorization_scheme_param
 
 from app.core.config import settings
+from app.exceptions.error_code import ErrorCode
 from app.security.jwt.jwt_decoder import JWTDecoder
 from app.security.jwt.jwt_encoder import JWTEncoder
-from app.exception.exception_handlers_initializer import JwtError
+from app.exceptions.exception_handlers_initializer import JwtError, InvalidTokenError
 
 JWT_SECRET_KEY = settings.JWT_SECRET_KEY
 HASH_ALGORITHM = settings.HASH_ALGORITHM
@@ -64,7 +65,11 @@ class JWTService:
         authorization = request.headers.get("Authorization")
         scheme, param = get_authorization_scheme_param(authorization)
         if not authorization or scheme.lower() != self.token_type:
-            raise JwtError(info={"e": "Token is invalid", "scheme": scheme}, code=ErrorCode.BS108)
+            raise InvalidTokenError(
+                error=ErrorCode.NoApplicableDataError,
+                code=ErrorCode.NoApplicableDataError.code(),
+                info=f"e: Token is invalid, scheme: {scheme}"
+            )
         return param
 
 

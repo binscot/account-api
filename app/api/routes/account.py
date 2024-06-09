@@ -10,7 +10,8 @@ from app import repository
 from app.api.dependencies import validate_user, get_current_user, get_redis_pool, get_current_user_short, jwt_authentication, \
     validate_token
 from app.core.logging.logging_handlers import LoggingAPIRoute
-from app.exception.exception_handlers_initializer import NotUniqueError, CredentialsException, JwtError
+from app.exceptions.error_code import ErrorCode
+from app.exceptions.exception_handlers_initializer import DuplicateDataError, InvalidPasswordError, TokenForgeryError
 from app.schemas.response_schema import CommonResponse, ErrorResponse, SignInData
 from app.schemas.user_schema import UserCreate, User, UserUpdate, UserShort
 from app.security.password_service import password_service
@@ -23,7 +24,11 @@ router = APIRouter(route_class=LoggingAPIRoute)
 async def register_user(req: UserCreate):
     user = await repository.user.get_by_email(username=req.username)
     if user:
-        raise NotUniqueError(info="중복된 아이디")
+        raise DuplicateDataError(
+            error=ErrorCode.DuplicateDataError,
+            code=ErrorCode.DuplicateDataError.code(),
+            info="It's a duplicate ID"
+        )
     new_user = await repository.user.create(obj_in=req)
     return CommonResponse(
         success=True,
@@ -79,7 +84,11 @@ async def update_user(req: UserUpdate, current_user: Annotated[User, Depends(get
                 password=req.original_password,
                 hashed_password=current_user.hashed_password
         ):
-            raise CredentialsException(info="현재 비밀번호가 일치하지 않습니다.")
+            raise InvalidPasswordError(
+                error=ErrorCode.InvalidPasswordError,
+                code=ErrorCode.InvalidPasswordError.code(),
+                info="The password does not match."
+            )
     await repository.user.update(db_obj=current_user, obj_in=req)
     update_user_short = await repository.user_short.get_by_email_short(username=current_user.username)
     return CommonResponse(success=True, data=update_user_short, message="update Successful")
@@ -104,7 +113,11 @@ async def reissue_token(
 ):
     redis_refresh_token = await redis.get(_id)
     if redis_refresh_token.decode('utf-8') != token:
-        raise JwtError(info="changed token.")
+        raise TokenForgeryError(
+            error=ErrorCode.TokenForgeryError,
+            code=ErrorCode.TokenForgeryError.code(),
+            info="changed token."
+        )
     token_response = await set_token_response(
         _id=_id,
         response=response,
